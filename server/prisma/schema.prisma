@@ -1,0 +1,59 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Player {
+  id        Int      @id @default(autoincrement())
+  name      String
+  position  Position
+  number    Int
+  isInjured Boolean
+  teamId    Int?
+  team      Team?    @relation(fields: [teamId], references: [id])
+
+  @@unique([teamId, number])
+}
+
+model Team {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  players     Player[]
+  createdAt   DateTime @default(now())
+  matchesHome Match[]  @relation("HomeTeam")
+  matchesAway Match[]  @relation("AwayTeam")
+  wonMatches  Match[]  @relation("MatchWinner")
+  lostMatches Match[]  @relation("MatchLoser")
+}
+
+model Match {
+  id           Int      @id @default(autoincrement())
+  date         DateTime
+  team1Id      Int
+  team2Id      Int
+  team1        Team     @relation("HomeTeam", fields: [team1Id], references: [id])
+  team2        Team     @relation("AwayTeam", fields: [team2Id], references: [id])
+  winnerTeamId Int?
+  winnerTeam   Team?    @relation("MatchWinner", fields: [winnerTeamId], references: [id])
+  loserTeamId  Int?
+  loserTeam    Team?    @relation("MatchLoser", fields: [loserTeamId], references: [id])
+
+  @@unique([date, team1Id, team2Id])
+}
+
+enum Position {
+  Goalkeeper
+  Defender
+  Midfielder
+  Forward
+}
